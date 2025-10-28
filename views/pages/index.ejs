@@ -1,0 +1,66 @@
+<div class="index-container">
+    <form id="form" action="/submit" method="POST">
+        <input type="text" name="inputUrl" id="inputUrl" class="url-input">
+        <button class="submit btn" id="submit">Submit</button>
+    </form>
+    <div class="short-url-container">
+        <h3>Your short URL</h3>
+        <div class="link-btns-div">
+            <a id="shortUrl" href="http://localhost:3000">http://localhost:3000/</a>
+            <div class="double-btns">
+                <button class="btn" id="copy-to-clipboard">Copy to clipboard</button>
+                <button class="btn" id="total-clicks">Total Clicks</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const inputUrl = document.querySelector("#inputUrl");
+    const submitBtn = document.querySelector("#submit");
+    const form = document.getElementById('form')
+    const shortUrl = document.getElementById('shortUrl')
+    const BASE_URL = window.location.href;
+    const copyToClipboardBtn = document.getElementById("copy-to-clipboard")
+    const totalClicksBtn = document.getElementById("total-clicks")
+
+    copyToClipboardBtn.addEventListener('click', (e)=> {
+        navigator.clipboard.writeText(shortUrl.innerText)
+    })
+
+    totalClicksBtn.addEventListener('click', async(e)=> {
+        const shortCode = shortUrl.getAttribute('shortCode');
+        if(shortCode == null){
+            alert("URL not shorten yet")
+            return
+        }
+        const response = await fetch(`/clicks/${shortCode}`)
+        const result = await response.json();
+        if(!result.success){
+            return alert(result.msg)
+        }
+        window.location.href = `${BASE_URL}display/${shortCode}/clicks`
+    })
+    
+    submitBtn.addEventListener('click', async(e)=> {
+        e.preventDefault();
+        if(inputUrl.value == '' || inputUrl.value == null || inputUrl.value.trim() == ''){
+            return alert("Enter a valid URL");
+        }
+        const response = await fetch("/submit", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({ inputUrl: inputUrl.value }),
+        })
+        const result = await response.json();
+        if(!result.success){
+            alert(result.msg)
+            return
+        }
+        shortUrl.innerText = `${BASE_URL}${result.data.shortCode}`
+        shortUrl.setAttribute('href', `${BASE_URL}${result.data.shortCode}`)
+        shortUrl.setAttribute('shortCode', `${result.data.shortCode}`)
+    })  
+    
+</script>
